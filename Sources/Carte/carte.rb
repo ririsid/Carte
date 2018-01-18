@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 require_relative "./bundler/setup"
+require 'digest'
 require "base64"
 require "xcodeproj"
 
@@ -81,6 +82,7 @@ class InfoPlistGenerator
     self.plistbuddy("Delete :Carte")
     self.plistbuddy("Add :Carte array")
     self.add_items_from_cocoapods
+    self.add_items_from_carthage
     self.items.sort.each_with_index do |(name, text), index|
       plistbuddy "Add :Carte:#{index}:name string #{name}"
       plistbuddy "Add :Carte:#{index}:text string #{text}"
@@ -100,6 +102,17 @@ class InfoPlistGenerator
     license_files_from("#{srcroot}/Pods").each do |filename|
       begin
         name = filename.split("/Pods/")[1].split("/")[0]
+        self.items[name] = Base64.strict_encode64(File.read(filename))
+      rescue
+      end
+    end
+    return items
+  end
+
+  def add_items_from_carthage
+    license_files_from("#{srcroot}/Carthage/Checkouts").each do |filename|
+      begin
+        name = filename.split("/Checkouts/")[1].split("/")[0]
         self.items[name] = Base64.strict_encode64(File.read(filename))
       rescue
       end
